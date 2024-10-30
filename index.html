@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de QR By Antho</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/9.4.4/math.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #121212;
+            color: #ffffff;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        body.light-mode {
+            background-color: #ffffff;
+            color: #000000;
+        }
+        h1 {
+            text-align: center;
+            margin-top: 5px; /* Cambiado de 10px a 5px para mover el título más arriba */
+        }
+        #qrcode {
+            margin-top: 10px; /* Ajusta este valor para subir el QR más arriba */
+            width: 200px;  /* Asegúrate de que el ancho coincida con el tamaño del QR */
+            height: 200px; /* Asegúrate de que la altura coincida con el tamaño del QR */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .mode-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            align-items: center;
+        }
+        .mode-toggle label {
+            margin-right: 5px;
+        }
+        .mode-toggle input[type="checkbox"] {
+            display: none;
+        }
+        .mode-toggle input[type="checkbox"] + .slider {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+            background-color: #ccc;
+            border-radius: 20px;
+            transition: background-color 0.3s;
+        }
+        .mode-toggle input[type="checkbox"]:checked + .slider {
+            background-color: #007bff;
+        }
+        .mode-toggle .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+        .mode-toggle input[type="checkbox"]:checked + .slider:before {
+            transform: translateX(20px);
+        }
+        .input-group {
+            margin-bottom: 5px; /* Cambiado de 10px a 5px para mover el grupo de entrada ms arriba */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .input-group input {
+            margin-bottom: 20px;
+            padding: 10px;
+            font-size: 16px;
+            width: 300px;
+            max-width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 15px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .input-group button {
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            border-radius: 30px;
+            transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+        }
+        .input-group button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .footer {
+            position: fixed;
+            bottom: 0px; /* Cambiado de 5px a 0px para mover el texto ms abajo */
+            right: 10px;
+            color: #888;
+            font-size: 14px;
+        }
+        .download-button {
+            margin-top: 30px;
+        }
+        #feedback-message {
+            margin-top: 30px;
+        }
+        .positive-message {
+            color: green;
+        }
+        .negative-message {
+            color: red;
+        }
+        .instagram-button {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            border-radius: 30px;
+            transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            align-items: center;
+        }
+        .instagram-button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .instagram-button img {
+            margin-left: 10px;
+            width: 24px;
+            height: 24px;
+        }
+        .calculator-button {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            border-radius: 30px;
+            transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+        }
+        .calculator-button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .calculator-container {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #f1f1f1;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            cursor: move;
+        }
+        .calculator-container input {
+            width: calc(100% - 20px);
+            padding: 10px;
+            font-size: 18px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            margin-left: 10px;
+        }
+        .calculator-container .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        .calculator-container .buttons button {
+            padding: 20px;
+            font-size: 18px;
+            border: none;
+            border-radius: 10px;
+            background-color: #007bff;
+            color: #ffffff;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+        }
+        .calculator-container .buttons button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .close-button {
+            position: absolute;
+            top: 1px;
+            right: 1px;
+            background-color: transparent;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .calculator-container input {
+            margin-left: 0;
+        }
+        .more-button {
+            position: fixed;
+            bottom: 20px;
+            left: 50%; 
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff; 
+            color: #ffffff; 
+            border: none;
+            border-radius: 30px; 
+            transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+        }
+        .more-button:hover {
+            background-color: #0056b3; 
+            transform: translate(-50%, -2px); /* Mueve el botón hacia arriba */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .translate-button {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            border-radius: 30px;
+            transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+        }
+        .translate-button:hover {
+            background-color: #0056b3;
+            transform: translate(-50%, -2px); /* Solo mueve el botón hacia arriba */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .translate-container {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #f1f1f1;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            cursor: move;
+            /* No se especifica width y height para que coincida con la calculadora */
+        }
+        .close-button {
+            position: absolute;
+            top: 1px;
+            right: 1px;
+            background-color: transparent;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #language-list {
+            list-style-type: none; /* Elimina los puntos de la lista */
+            padding: 0; /* Elimina el padding */
+            margin: 10px 0; /* Margen superior e inferior */
+        }
+        #language-list li {
+            padding: 5px 0; /* Espaciado entre los elementos de la lista */
+            font-size: 16px; /* Tamaño de fuente */
+        }
+        .language-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff; /* Color de fondo */
+            color: #ffffff; /* Color del texto */
+            border: none;
+            border-radius: 30px;
+            margin: 5px; /* Espaciado entre botones */
+            transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+        }
+        .language-button:hover {
+            background-color: #0056b3; /* Color de fondo al pasar el ratón */
+            transform: translateY(-2px); /* Mueve el botón hacia arriba */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        #translate-header {
+            color: #000000; /* Cambia el color del texto a negro */
+        }
+    </style>
+</head>
+<body class="dark-mode">
+    <div class="mode-toggle">
+        <label for="dark-mode-toggle">Modo Oscuro/Claro:</label>
+        <input type="checkbox" id="dark-mode-toggle" onchange="toggleMode()">
+        <span class="slider"></span>
+    </div>
+
+    <button class="calculator-button" onclick="toggleCalculator()">Calculadora</button>
+
+    <!-- Botón de traducción de Google -->
+    <!-- <button class="translate-button" onclick="toggleTranslateWindow()">Traducir Página</button> -->
+
+    <!-- Ventana de traducción -->
+    <div class="translate-container" id="translate">
+        <button class="close-button" onclick="toggleTranslateWindow()">✖</button>
+        <h2 id="translate-header">Selecciona un idioma para traducir:</h2>
+        <div id="language-buttons">
+            <button class="language-button" onclick="translateTo('en', this)">Inglés</button>
+            <button class="language-button" onclick="translateTo('es', this)">Español</button>
+            <button class="language-button" onclick="translateTo('ar', this)">Árabe</button>
+            <button class="language-button" onclick="translateTo('fr', this)">Francés</button>
+            <button class="language-button" onclick="translateTo('ru', this)">Ruso</button>
+            <button class="language-button" onclick="translateTo('pt', this)">Portugués</button>
+            <button class="language-button" onclick="translateTo('ur', this)">Urdu</button>
+            <button class="language-button" onclick="translateTo('id', this)">Indonesio</button>
+        </div>
+        <div id="google_translate_element"></div>
+    </div>
+
+    <h1 id="header">Generador de Código QR</h1>
+    <div class="input-group">
+        <input type="text" id="url" placeholder="Introduce un Texto">
+        <button onclick="generateQR()"><span id="generate-button">Generar QR</span></button>
+        <button class="download-button" onclick="downloadQR()"><span id="download-button">Descargar QR</span></button>
+        <div id="feedback-message"></div>
+    </div>
+    <div id="qrcode"></div>
+
+    <a class="instagram-button" href="https://www.instagram.com/anthoo_.ok" target="_blank">
+        Instagram <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Instagram_icon.png" alt="Instagram">
+    </a>
+
+    <div class="footer">
+        <p id="footer-text">Echo por Anthony Lopez</p>
+    </div>
+
+    <button class="more-button" onclick="openNewWindow()">Más</button>
+
+    <div class="calculator-container" id="calculator">
+        <button class="close-button" onclick="toggleCalculator()">✖</button>
+        <input type="text" id="calc-display" disabled>
+        <div class="buttons">
+            <button onclick="appendToDisplay('7')">7</button>
+            <button onclick="appendToDisplay('8')">8</button>
+            <button onclick="appendToDisplay('9')">9</button>
+            <button onclick="appendToDisplay('/')">/</button>
+            <button onclick="appendToDisplay('4')">4</button>
+            <button onclick="appendToDisplay('5')">5</button>
+            <button onclick="appendToDisplay('6')">6</button>
+            <button onclick="appendToDisplay('*')">*</button>
+            <button onclick="appendToDisplay('1')">1</button>
+            <button onclick="appendToDisplay('2')">2</button>
+            <button onclick="appendToDisplay('3')">3</button>
+            <button onclick="appendToDisplay('-')">-</button>
+            <button onclick="appendToDisplay('0')">0</button>
+            <button onclick="appendToDisplay('.')">.</button>
+            <button onclick="calculateResult()">=</button>
+            <button onclick="appendToDisplay('+')">+</button>
+            <button onclick="clearDisplay()">C</button>
+            <button onclick="deleteLastChar()">⌫</button>
+        </div>
+    </div>
+
+    <div id="scanner-container" style="display: none;">
+        <button class="close-button" onclick="toggleScanner()">✖</button>
+        <div id="reader" style="width: 300px; height: 300px;"></div>
+    </div>
+
+    <script>
+        // JavaScript para el modo oscuro/claro
+        function toggleMode() {
+            document.body.classList.toggle('light-mode');
+        }
+
+        // JavaScript para generar QR
+        function generateQR() {
+            const url = document.getElementById("url").value.trim();
+            const qrcodeContainer = document.getElementById("qrcode");
+            const feedbackMessage = document.getElementById("feedback-message");
+
+            qrcodeContainer.innerHTML = ""; // Limpia el contenedor
+
+            if (!url) {
+                feedbackMessage.textContent = "Por favor, introduce un texto válido.";
+                feedbackMessage.className = "negative-message";
+                return;
+            }
+
+            new QRCode(qrcodeContainer, {
+                text: url,
+                width: 200,  // Tamaño aumentado
+                height: 200  // Tamaño aumentado
+            });
+
+            feedbackMessage.textContent = "¡QR generado exitosamente!";
+            feedbackMessage.className = "positive-message";
+        }
+
+        // JavaScript para descargar el QR
+        function downloadQR() {
+            var qrcodeContainer = document.getElementById("qrcode");
+            var img = qrcodeContainer.querySelector("img");
+            var feedbackMessage = document.getElementById("feedback-message");
+
+            if (img) {
+                var link = document.createElement("a");
+                link.href = img.src;
+                link.download = "qrcode.png";
+                link.click();
+                feedbackMessage.textContent = "¡QR descargado exitosamente!";
+                feedbackMessage.className = "positive-message"; // Aplica clase positiva
+            } else {
+                feedbackMessage.textContent = "Primero genera un código QR.";
+                feedbackMessage.className = "negative-message"; // Aplica clase negativa
+            }
+        }
+
+        // JavaScript para la calculadora
+        function toggleCalculator() {
+            var calculator = document.getElementById("calculator");
+            if (calculator.style.display === "none" || calculator.style.display === "") {
+                calculator.style.display = "block";
+            } else {
+                calculator.style.display = "none";
+            }
+        }
+
+        function appendToDisplay(value) {
+            document.getElementById("calc-display").value += value;
+        }
+
+        function clearDisplay() {
+            document.getElementById("calc-display").value = "";
+        }
+
+        function deleteLastChar() {
+            var display = document.getElementById("calc-display");
+            display.value = display.value.slice(0, -1);
+        }
+
+        function calculateResult() {
+            var display = document.getElementById("calc-display");
+            try {
+                display.value = math.evaluate(display.value);
+            } catch (e) {
+                display.value = "Error";
+            }
+        }
+
+        // Funcionalidad para arrastrar la calculadora
+        dragElement(document.getElementById("calculator"));
+
+        function dragElement(elmnt) {
+            var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            if (document.getElementById(elmnt.id + "header")) {
+                document.getElementById(elmnt.id + "header").onmousedown = dragMouseDown;
+            } else {
+                elmnt.onmousedown = dragMouseDown;
+            }
+
+            function dragMouseDown(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+
+            function elementDrag(e) {
+                e = e || window.event;
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
+                elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+            }
+
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+        }
+
+        function openNewWindow() {
+            var newWindow = window.open('', '_blank', 'fullscreen=yes');
+            newWindow.document.body.style.backgroundColor = '#121212'; // Cambia el color de fondo
+
+            // Crear un contenedor para los botones
+            var buttonContainer = newWindow.document.createElement('div');
+            buttonContainer.style.display = 'flex';
+            buttonContainer.style.justifyContent = 'flex-start'; // Alinear a la izquierda
+            buttonContainer.style.gap = '10px'; // Espacio entre los botones
+            buttonContainer.style.padding = '20px';
+            buttonContainer.style.position = 'absolute';
+            buttonContainer.style.top = '0';
+            buttonContainer.style.left = '0';
+
+            // Crear un botón "Emu GBA" en la nueva ventana
+            var gbaButton = newWindow.document.createElement('button');
+            gbaButton.textContent = 'Emu GBA';
+            gbaButton.style.padding = '12px 24px';
+            gbaButton.style.fontSize = '16px';
+            gbaButton.style.cursor = 'pointer';
+            gbaButton.style.backgroundColor = '#007bff';
+            gbaButton.style.color = '#ffffff';
+            gbaButton.style.border = 'none';
+            gbaButton.style.borderRadius = '30px';
+            gbaButton.style.transition = 'background-color 0.3s, transform 0.3s, box-shadow 0.3s';
+
+            // Agregar efecto hover
+            gbaButton.onmouseover = function() {
+                gbaButton.style.backgroundColor = '#0056b3';
+                gbaButton.style.transform = 'translateY(-2px)';
+                gbaButton.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.2)';
+            };
+            gbaButton.onmouseout = function() {
+                gbaButton.style.backgroundColor = '#007bff';
+                gbaButton.style.transform = 'translateY(0)';
+                gbaButton.style.boxShadow = 'none';
+            };
+
+            // Agregar evento onclick para redirigir a index.html
+            gbaButton.onclick = function() {
+                newWindow.location.href = './EmuAntho/index.html';
+            };
+
+            // Agregar el botón "Emu GBA" al contenedor
+            buttonContainer.appendChild(gbaButton);
+
+            // Crear un botón "Emu GBC" en la nueva ventana
+            var gbcButton = newWindow.document.createElement('button');
+            gbcButton.textContent = 'Emu GBC';
+            gbcButton.style.padding = '12px 24px';
+            gbcButton.style.fontSize = '16px';
+            gbcButton.style.cursor = 'pointer';
+            gbcButton.style.backgroundColor = '#007bff';
+            gbcButton.style.color = '#ffffff';
+            gbcButton.style.border = 'none';
+            gbcButton.style.borderRadius = '30px';
+            gbcButton.style.transition = 'background-color 0.3s, transform 0.3s, box-shadow 0.3s';
+
+            // Agregar efecto hover
+            gbcButton.onmouseover = function() {
+                gbcButton.style.backgroundColor = '#0056b3';
+                gbcButton.style.transform = 'translateY(-2px)';
+                gbcButton.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.2)';
+            };
+            gbcButton.onmouseout = function() {
+                gbcButton.style.backgroundColor = '#007bff';
+                gbcButton.style.transform = 'translateY(0)';
+                gbcButton.style.boxShadow = 'none';
+            };
+
+            // Agregar evento onclick para redirigir a la página de Emu GBC
+            gbcButton.onclick = function() {
+                newWindow.location.href = './EmuGBC/index.html';
+            };
+
+            // Agregar el botón "Emu GBC" al contenedor
+            buttonContainer.appendChild(gbcButton);
+
+            // Crear un botón "Video Download" en la nueva ventana
+            var videoButton = newWindow.document.createElement('button');
+            videoButton.textContent = 'Video Download';
+            videoButton.style.padding = '12px 24px';
+            videoButton.style.fontSize = '16px';
+            videoButton.style.cursor = 'pointer';
+            videoButton.style.backgroundColor = '#007bff';
+            videoButton.style.color = '#ffffff';
+            videoButton.style.border = 'none';
+            videoButton.style.borderRadius = '30px';
+            videoButton.style.transition = 'background-color 0.3s, transform 0.3s, box-shadow 0.3s';
+
+            // Agregar efecto hover
+            videoButton.onmouseover = function() {
+                videoButton.style.backgroundColor = '#0056b3';
+                videoButton.style.transform = 'translateY(-2px)';
+                videoButton.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.2)';
+            };
+            videoButton.onmouseout = function() {
+                videoButton.style.backgroundColor = '#007bff';
+                videoButton.style.transform = 'translateY(0)';
+                videoButton.style.boxShadow = 'none';
+            };
+
+            // Agregar evento onclick para el botón "Video Download"
+            videoButton.onclick = function() {
+                newWindow.location.href = './Video Downloader By Antho/index.html';
+            };
+
+            // Crear un botón "Pixel Art" en la nueva ventana
+            var pixelArtButton = newWindow.document.createElement('button');
+            pixelArtButton.textContent = 'Pixel Art';
+            pixelArtButton.style.padding = '12px 24px';
+            pixelArtButton.style.fontSize = '16px';
+            pixelArtButton.style.cursor = 'pointer';
+            pixelArtButton.style.backgroundColor = '#007bff';
+            pixelArtButton.style.color = '#ffffff';
+            pixelArtButton.style.border = 'none';
+            pixelArtButton.style.borderRadius = '30px';
+            pixelArtButton.style.transition = 'background-color 0.3s, transform 0.3s, box-shadow 0.3s';
+
+            // Agregar efecto hover
+            pixelArtButton.onmouseover = function() {
+                pixelArtButton.style.backgroundColor = '#0056b3';
+                pixelArtButton.style.transform = 'translateY(-2px)';
+                pixelArtButton.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.2)';
+            };
+            pixelArtButton.onmouseout = function() {
+                pixelArtButton.style.backgroundColor = '#007bff';
+                pixelArtButton.style.transform = 'translateY(0)';
+                pixelArtButton.style.boxShadow = 'none';
+            };
+
+            // Agregar evento onclick para el botón "Pixel Art"
+            pixelArtButton.onclick = function() {
+                newWindow.location.href = './PixelArt/index.html';
+            };
+
+            // Crear un botón "Escanear QR" en la nueva ventana
+            var scanButton = newWindow.document.createElement('button');
+            scanButton.textContent = 'Escanear QR';
+            scanButton.style.padding = '12px 24px';
+            scanButton.style.fontSize = '16px';
+            scanButton.style.cursor = 'pointer';
+            scanButton.style.backgroundColor = '#007bff';
+            scanButton.style.color = '#ffffff';
+            scanButton.style.border = 'none';
+            scanButton.style.borderRadius = '30px';
+            scanButton.style.transition = 'background-color 0.3s, transform 0.3s, box-shadow 0.3s';
+
+            // Agregar efecto hover
+            scanButton.onmouseover = function() {
+                scanButton.style.backgroundColor = '#0056b3';
+                scanButton.style.transform = 'translateY(-2px)';
+                scanButton.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.2)';
+            };
+            scanButton.onmouseout = function() {
+                scanButton.style.backgroundColor = '#007bff';
+                scanButton.style.transform = 'translateY(0)';
+                scanButton.style.boxShadow = 'none';
+            };
+
+            // Agregar evento onclick para redirigir a la página de escaneo
+            scanButton.onclick = function() {
+                newWindow.location.href = 'Escaner QR Antho/index.html';
+            };
+
+            // Agregar los botones al contenedor
+            buttonContainer.appendChild(videoButton);
+            buttonContainer.appendChild(pixelArtButton);
+            buttonContainer.appendChild(scanButton);
+
+            // Crear un botón "Editor QR" en la nueva ventana
+            var qrEditorButton = newWindow.document.createElement('button');
+            qrEditorButton.textContent = 'Editor QR';
+            qrEditorButton.style.padding = '12px 24px';
+            qrEditorButton.style.fontSize = '16px';
+            qrEditorButton.style.cursor = 'pointer';
+            qrEditorButton.style.backgroundColor = '#007bff';
+            qrEditorButton.style.color = '#ffffff';
+            qrEditorButton.style.border = 'none';
+            qrEditorButton.style.borderRadius = '30px';
+            qrEditorButton.style.transition = 'background-color 0.3s, transform 0.3s, box-shadow 0.3s';
+
+            // Agregar efecto hover
+            qrEditorButton.onmouseover = function() {
+                qrEditorButton.style.backgroundColor = '#0056b3';
+                qrEditorButton.style.transform = 'translateY(-2px)';
+                qrEditorButton.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.2)';
+            };
+            qrEditorButton.onmouseout = function() {
+                qrEditorButton.style.backgroundColor = '#007bff';
+                qrEditorButton.style.transform = 'translateY(0)';
+                qrEditorButton.style.boxShadow = 'none';
+            };
+
+            // Agregar evento onclick para redirigir a la página del Editor QR
+            qrEditorButton.onclick = function() {
+                newWindow.location.href = './EditorQR/index.html';
+            };
+
+            // Agregar el botón "Editor QR" al contenedor
+            buttonContainer.appendChild(qrEditorButton);
+
+            // Agregar el contenedor al cuerpo de la nueva ventana
+            newWindow.document.body.appendChild(buttonContainer);
+        }
+
+        function toggleTranslateWindow() {
+            var translateContainer = document.getElementById("translate");
+            if (translateContainer.style.display === "none" || translateContainer.style.display === "") {
+                translateContainer.style.display = "block";
+            } else {
+                translateContainer.style.display = "none";
+            }
+        }
+
+        function translatePage() {
+            var googleTranslateElement = document.createElement('script');
+            googleTranslateElement.type = 'text/javascript';
+            googleTranslateElement.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+            document.body.appendChild(googleTranslateElement);
+        }
+
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({pageLanguage: 'es'}, 'google_translate_element');
+        }
+
+        const translations = {
+            en: {
+                title: "QR Code Generator",
+                header: "QR Code Generator",
+                selectLanguage: "Select a language to translate:",
+                generateQR: "Generate QR",
+                downloadQR: "Download QR",
+                footer: "Created by Anthony Lopez",
+                more: "More",
+                calculator: "Calculator",
+                translatePage: "Translate Page",
+                toggleMode: "Dark/Light Mode:",
+                instagram: "Instagram",
+                placeholder: "Enter Text", // Placeholder for input
+            },
+            es: {
+                title: "Generador de Código QR",
+                header: "Generador de Código QR",
+                selectLanguage: "Selecciona un idioma para traducir:",
+                generateQR: "Generar QR",
+                downloadQR: "Descargar QR",
+                footer: "Echo por Anthony Lopez",
+                more: "Más",
+                calculator: "Calculadora",
+                translatePage: "Traducir Página",
+                toggleMode: "Modo Oscuro/Claro:",
+                instagram: "Instagram",
+                placeholder: "Introduce un Texto", // Placeholder for input
+            },
+            ar: {
+                title: "مولد رمز الاستجابة السريعة",
+                header: "مولد مز الاستجابة السريعة",
+                selectLanguage: "اختر لغة للترجمة:",
+                generateQR: "إنشاء رمز الاستجابة السريعة",
+                downloadQR: "تنزيل رمز الاستجابة السريعة",
+                footer: "أنشأه أنتوني لوبيز",
+                more: "المزيد",
+                calculator: "آلة حاسبة",
+                translatePage: "ترجمة الصفحة",
+                toggleMode: "الوضع المظلم/الفاتح:",
+                instagram: "إنستغرام",
+                placeholder: "أدل النص", // Placeholder for input
+            },
+            fr: {
+                title: "Générateur de QR Code",
+                header: "Générateur de QR Code",
+                selectLanguage: "Sélectionnez une langue à traduire:",
+                generateQR: "Générer un QR",
+                downloadQR: "Télécharger le QR",
+                footer: "Créé par Anthony Lopez",
+                more: "Plus",
+                calculator: "Calculatrice",
+                translatePage: "Traduire la page",
+                toggleMode: "Mode sombre/clair:",
+                instagram: "Instagram",
+                placeholder: "Entrez le texte", // Placeholder for input
+            },
+            ru: {
+                title: "Генератор QR-кода",
+                header: "Генератор QR-кода",
+                selectLanguage: "Выберите язык для перевода:",
+                generateQR: "Сгенерировать QR",
+                downloadQR: "Скачать QR",
+                footer: "Создано Энтони Лопесом",
+                more: "Больше",
+                calculator: "Калькулятор",
+                translatePage: "Перевести страницу",
+                toggleMode: "Темный/Светлый режим:",
+                instagram: "Инстаграм",
+                placeholder: "Введите текст", // Placeholder for input
+            },
+            pt: {
+                title: "Gerador de QR Code",
+                header: "Gerador de QR Code",
+                selectLanguage: "Selecione um idioma para traduzir:",
+                generateQR: "Gerar QR",
+                downloadQR: "Baixar QR",
+                footer: "Criado por Anthony Lopez",
+                more: "Mais",
+                calculator: "Calculadora",
+                translatePage: "Traduzir Página",
+                toggleMode: "Modo Escuro/Claro:",
+                instagram: "Instagram",
+                placeholder: "Digite o texto", // Placeholder for input
+            },
+            ur: {
+                title: "کیو آر کوڈ جنریٹر",
+                header: "کیو آر کوڈ جنریٹر",
+                selectLanguage: "ترجمے کے لیے ایک زبان منتخب کریں:",
+                generateQR: "کیو آر بنائیں",
+                downloadQR: "کیو آر ڈاؤن لوڈ کریں",
+                footer: "انتھونی لوپیز کے ذریعہ بنایا گیا",
+                more: "مزید",
+                calculator: "کیلکولیٹر",
+                translatePage: "صفحہ ترجمہ کریں",
+                toggleMode: "تاریک/ہلکا موڈ:",
+                instagram: "انسٹاگرام",
+                placeholder: "متن درج کریں", // Placeholder for input
+            },
+            id: {
+                title: "Generator Kode QR",
+                header: "Generator Kode QR",
+                selectLanguage: "Pilih bahasa untuk diterjemahkan:",
+                generateQR: "Hasilkan QR",
+                downloadQR: "Unduh QR",
+                footer: "Dibuat oleh Anthony Lopez",
+                more: "Lebih",
+                calculator: "Kalkulator",
+                translatePage: "Terjemahkan Halaman",
+                toggleMode: "Mode Gelap/Cerah:",
+                instagram: "Instagram",
+                placeholder: "Masukkan Teks", // Placeholder for input
+            },
+        };
+
+        function translateTo(language, button) {
+            // Quitar la clase 'selected' de todos los botones
+            var buttons = document.querySelectorAll('.language-button');
+            buttons.forEach(function(btn) {
+                btn.classList.remove('selected');
+            });
+
+            // Agregar la clase 'selected' al botón que fue clicado
+            button.classList.add('selected');
+
+            // Traducir el contenido de la página
+            document.title = translations[language].title; // Cambia el título de la página
+            document.getElementById("header").textContent = translations[language].header; // Cambia el encabezado
+            document.getElementById("generate-button").textContent = translations[language].generateQR; // Cambia el texto del botón "Generar QR"
+            document.getElementById("download-button").textContent = translations[language].downloadQR; // Cambia el texto del botón "Descargar QR"
+            document.getElementById("footer-text").textContent = translations[language].footer; // Cambia el texto del pie de página
+            document.getElementById("translate-header").textContent = translations[language].selectLanguage; // Cambia el encabezado de la ventana de traducción
+
+            // Cambiar el texto de los otros botones
+            document.querySelector('.more-button').textContent = translations[language].more; // Cambia el texto del botón "Más"
+            document.querySelector('.calculator-button').textContent = translations[language].calculator; // Cambia el texto del botón "Calculadora"
+            // document.querySelector('.translate-button').textContent = translations[language].translatePage; // Cambia el texto del botón "Traducir Página"
+            document.querySelector('.instagram-button span').textContent = translations[language].instagram; // Cambia el texto del botón de Instagram
+            document.querySelector('.mode-toggle label').textContent = translations[language].toggleMode; // Cambia el texto del toggle "Modo Oscuro/Claro"
+            
+            // Cambiar el placeholder del input
+            document.getElementById("url").placeholder = translations[language].placeholder; // Cambia el placeholder del input
+        }
+
+        function toggleScanner() {
+            var scannerContainer = document.getElementById("scanner-container");
+            if (scannerContainer.style.display === "none" || scannerContainer.style.display === "") {
+                scannerContainer.style.display = "block";
+                startScanner();
+            } else {
+                scannerContainer.style.display = "none";
+                stopScanner();
+            }
+        }
+
+        function startScanner() {
+            const html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start(
+                { facingMode: "environment" }, // Use rear camera
+                {
+                    fps: 10,    // Set the scanning frequency
+                    qrbox: 250  // Set the scanning box size
+                },
+                qrCodeMessage => {
+                    alert(`QR Code detected: ${qrCodeMessage}`);
+                    stopScanner();
+                },
+                errorMessage => {
+                    // Handle scan errors
+                }
+            ).catch(err => {
+                console.error(`Unable to start scanning, error: ${err}`);
+            });
+        }
+
+        function stopScanner() {
+            const html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.stop().then(() => {
+                // QR Code scanning is stopped.
+            }).catch(err => {
+                console.error(`Unable to stop scanning, error: ${err}`);
+            });
+        }
+
+        function openScanner() {
+            window.location.href = 'Escaner QR Antho/index.html';
+        }
+    </script>
+</body>
+</html>
